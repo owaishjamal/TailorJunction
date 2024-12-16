@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TailorJunction</title>
+  
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif; /* Changed font */
+    }
+    /* Background Video */
+    #bg-video {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      z-index: -1;
+    }
+    /* Content Styles */
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .logo {
+      margin-bottom: 0; /* Removed margin above the logo */
+      text-align: center;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .options button {
+      margin: 10px;
+      padding: 20px 40px;
+      width: 300px;
+      background-color: #000;
+      color: #ffd700; /* Golden color */
+      border: 2px solid #ffd700; /* Golden border */
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 24px;
+    }
+    .options button:hover {
+      background-color: #ffd700; /* Golden color */
+      color: #000; /* Black text */
+    }
+    h1 {
+      font-family: 'Brush Script MT', cursive;
+      font-size: 80px; /* Reduced font size */
+      margin: 0;
+      color: #ffd700; /* Golden color */
+    }
+    .or {
+      margin: 20px 0;
+      font-size: 24px;
+      color: #000(0, 0%, 33%);
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Video -->
+  <video autoplay muted loop id="bg-video">
+    <source src="../../firstpage/background.mp4" type="video/mp4">
+    Your browser does not support HTML5 video.
+  </video>
+  <div class="logo">
+    <img src="tailor.png" alt="Laundrix Logo" width="480" height="280">
+  </div>
+  <h1 style="margin-top: 20px;">Tailor Junction</h1><br> <!-- Added margin-top to the heading -->
+  <div class="options">
+    <button onclick="window.location.href='../../customerlogin/index.html'">Customer</button>
+    <span class="or">OR</span>
+    <button onclick="window.location.href='../../adminlogin/index.html'">Service Provider</button>
+  </div>
+</body>
+</html>

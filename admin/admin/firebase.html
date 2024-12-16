@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Admin Dashboard | Tailor Junction</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <!-- jQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-database.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Firebase Config -->
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+  apiKey: "AIzaSyC_pIZWNXaieFgV80QPhh6b1ylcjpTAQUI",
+  authDomain: "tailor-421019.firebaseapp.com",
+  projectId: "tailor-421019",
+  storageBucket: "tailor-421019.appspot.com",
+  messagingSenderId: "61589354002",
+  appId: "1:61589354002:web:15b976ea0367948cf10acb",
+  measurementId: "G-5ZPCFLWY2J"
+};
+    firebase.initializeApp(firebaseConfig);
+
+    // Fetch data from Firebase and update table
+    var database = firebase.database();
+    database.ref('Appointments').once('value', function(snapshot){
+      if(snapshot.exists()){
+        var content = '';
+        snapshot.forEach(function(data){
+          var val = data.val();
+          content += '<tr>';
+          content += '<td>' + val.firstName + '</td>';
+          content += '<td>' + val.lastName + '</td>';
+          content += '<td>' + val.email + '</td>';
+          content += '<td>' + val.aptDate + '</td>';
+          content += '<td>' + val.aptTime + '</td>';
+          content += '<td>' + val.gender + '</td>';
+          content += '<td>' + val.service + '</td>';
+          content += '<td>' + val.address + '</td>';
+          content += '<td>' + val.state + '</td>';
+          content += '<td>' + val.city + '</td>';
+          content += '<td>' + val.message + '</td>';
+          content += '<td>' + val.paymentMethod + '</td>';
+          content += '<td><label class="switch">';
+          content += '<input type="checkbox" id="completed' + data.key + '" onchange="toggleCompletion(\'' + data.key + '\')" ' + (val.completed ? 'checked' : '') + '>';
+          content += '<span class="slider round"></span></label></td>'; // Toggle Button
+          content += '</tr>';
+        });
+        $('#table1 tbody').append(content);
+        updateOrdersLeft(); // Update orders left initially
+      }
+    });
+
+    // Function to toggle completion status
+    function toggleCompletion(key) {
+      var appointmentRef = firebase.database().ref('Appointments/' + key);
+      appointmentRef.once('value', function(snapshot) {
+        var completed = snapshot.val().completed;
+        appointmentRef.update({ completed: !completed });
+        updateOrdersLeft(); // Update orders left after toggle
+      });
+    }
+
+    // Function to update the number of orders left
+    function updateOrdersLeft() {
+      var ordersLeft = $('input[type="checkbox"]:not(:checked)').length;
+      $('#ordersLeft').text('Orders Left: ' + ordersLeft);
+    }
+
+    // Fetch data from Firebase for charts
+    database.ref('Appointments').once('value', function(snapshot){
+      if(snapshot.exists()){
+        var aptDates = [];
+        var serviceCounts = {};
+        var genderCounts = {};
+        var stateCounts = {};
+
+        snapshot.forEach(function(data){
+          var val = data.val();
+          var aptDate = val.aptDate;
+          aptDates.push(aptDate);
+          var service = val.service;
+          if (serviceCounts[service]) {
+            serviceCounts[service]++;
+          } else {
+            serviceCounts[service] = 1;
+          }
+          var gender = val.gender;
+          if (genderCounts[gender]) {
+            genderCounts[gender]++;
+          } else {
+            genderCounts[gender] = 1;
+          }
+          var state = val.state;
+          if (stateCounts[state]) {
+            stateCounts[state]++;
+          } else {
+            stateCounts[state] = 1;
+          }
+        });
+
+        // Create service chart
+        var serviceCtx = document.getElementById('serviceChart').getContext('2d');
+        var serviceChart = new Chart(serviceCtx, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(serviceCounts),
+            datasets: [{
+              label: 'Number of Appointments by Service',
+              data: Object.values(serviceCounts),
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: true
+                }
+              }]
+            }
+          }
+        });
+
+        // Create gender chart
+        var genderCtx = document.getElementById('genderChart').getContext('2d');
+        var genderChart = new Chart(genderCtx, {
+          type: 'pie',
+          data: {
+            labels: Object.keys(genderCounts),
+            datasets: [{
+              label: 'Number of Appointments by Gender',
+              data: Object.values(genderCounts),
+              backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)'],
+              borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: true
+                }
+              }]
+            }
+          }
+        });
+
+        // Create state chart
+        var stateCtx = document.getElementById('stateChart').getContext('2d');
+        var stateChart = new Chart(stateCtx, {
+          type: 'doughnut',
+          data: {
+            labels: Object.keys(stateCounts),
+            datasets: [{
+              label: 'Number of Appointments by State',
+              data: Object.values(stateCounts),
+              backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)'],
+              borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)'],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: true
+                }
+              }]
+            }
+          }
+        });
+      }
+    });
+
+  </script>
+  <!-- Custom Styles -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #555555; /* Black background */
+      color: #fff; /* White text */
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 15px;
+      position: relative; /* Add position relative */
+    }
+
+    h1 {
+      font-size: 36px;
+      font-weight: bold;
+      color: #fff; /* White heading */
+      margin-bottom: 20px;
+      text-align: center; /* Center align heading */
+    }
+
+    .table th {
+      color: #fff; /* White text for table headers */
+      background-color: #f0ad4e; /* Yellow header background */
+      font-weight: bold;
+      text-align: center; /* Center align header text */
+    }
+
+    .table td {
+      color: #000; /* Black text for table data */
+      background-color: #fff; /* White cell background */
+      text-align: center; /* Center align cell text */
+    }
+
+    .appointment-details {
+      font-size: 18px;
+      font-family: 'Arial', sans-serif; /* Use Arial font */
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 30px; /* Add some bottom margin */
+      color: #fff; /* White text */
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+      margin: auto; /* Center align toggle button */
+    }
+
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #fff; /* White background */
+      border: 1px solid #ccc; /* Gray border */
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: #ccc; /* Gray circle */
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+
+    input:checked + .slider {
+      background-color: #f0ad4e; /* Yellow background when toggled on */
+      border-color: #f0ad4e; /* Yellow border when toggled on */
+    }
+
+    input:checked + .slider:before {
+      -webkit-transform: translateX(26px);
+      -ms-transform: translateX(26px);
+      transform: translateX(26px);
+      background-color: #fff; /* White circle when toggled on */
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+      border-radius: 34px;
+    }
+
+    .slider.round:before {
+      border-radius: 50%;
+    }
+
+    .logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 100px;
+      height: auto;
+    }
+
+    /* Background around the charts */
+    .chart-container {
+      background-color: hsl(0, 11%, 98%); /* Dark gray background */
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+
+    /* Orders left heading */
+    #ordersLeft {
+      text-align: center;
+      font-size: 20px;
+      margin-top: 20px;
+    }
+
+    /* Logout button */
+    .logout-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background-color: #f0ad4e; /* Yellow background */
+      color: #fff; /* White text */
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .logout-button:hover {
+      background-color: #d9534f; /* Red background on hover */
+    }
+  </style>
+</head>
+<body>
+  <!-- Logo -->
+  <img src="../../firstpage/tailor.png" alt="Tailor Junction Logo" class="logo">
+  
+  <!-- Logout button -->
+  <button class="logout-button" onclick="window.location.href='../../adminlogin/index.html'">Logout</button>
+
+  <div class="container">
+    <h1>Contact Appointments</h1>
+    <p class="appointment-details">Appointment Details:</p>
+    <p id="ordersLeft"></p> <br>
+    <table class="table table-striped" id="table1">
+      <thead>
+        <tr>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Email</th>
+          <th>Appointment Date</th>
+          <th>Appointment Time</th>
+          <th>Gender</th>
+          <th>Service</th>
+          <th>Address</th>
+          <th>State</th>
+          <th>City</th>
+          <th>Message</th>
+          <th>Payment Method</th>
+          <th>Completed</th> <!-- Added Completed Column -->
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data will be populated here -->
+      </tbody>
+    </table>
+
+    <!-- Chart.js Canvas -->
+    <div class="chart-container">
+      <canvas id="serviceChart" width="400" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="genderChart" width="400" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="stateChart" width="400" height="200"></canvas>
+    </div>
+  </div>
+</body>
+</html>
